@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
+import clientPromise from '@/lib/mongodb';
 
-// Mock data generator for engine details
+// Mock data generator (keeping for fallback)
 const generateEngineDetails = (searchId: string) => {
   const engines = ['Sabre', 'Amadeus', 'Galileo', 'Worldspan', 'NDC'];
   return engines.map((engine) => ({
@@ -33,6 +34,29 @@ export async function GET(
   request: Request,
   { params }: { params: { searchId: string } }
 ) {
-  const data = generateEngineDetails(params.searchId);
-  return NextResponse.json(data);
+  try {
+    // Try to connect to MongoDB
+    const client = await clientPromise;
+    const db = client.db("search_analytics");
+    const collection = db.collection("engine_details");
+
+    // Attempt to fetch real data
+    const data = await collection
+      .find({ SearchId: params.searchId })
+      .toArray();
+
+    // If we have real data, return it
+    if (data.length > 0) {
+      return NextResponse.json(data);
+    }
+
+    // Fallback to mock data if no real data exists
+    const mockData = generateEngineDetails(params.searchId);
+    return NextResponse.json(mockData);
+  } catch (error) {
+    console.error('MongoDB connection error:', error);
+    // Fallback to mock data on error
+    const mockData = generateEngineDetails(params.searchId);
+    return NextResponse.json(mockData);
+  }
 }
