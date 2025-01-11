@@ -53,15 +53,23 @@ export default function Dashboard() {
 
   const fetchData = async () => {
     try {
-      const response = await fetch('/api/search-logs');
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      // Fetch search logs
+      const logsResponse = await fetch('/api/search-logs');
+      if (!logsResponse.ok) {
+        throw new Error(`HTTP error! status: ${logsResponse.status}`);
       }
-      const data = await response.json();
-      setSearchLogs(data);
-      updateStats(data);
+      const logsData = await logsResponse.json();
+      setSearchLogs(logsData);
+
+      // Fetch stats
+      const statsResponse = await fetch('/api/stats');
+      if (!statsResponse.ok) {
+        throw new Error(`HTTP error! status: ${statsResponse.status}`);
+      }
+      const statsData = await statsResponse.json();
+      setStats(statsData);
     } catch (error) {
-      console.error('Error fetching search logs:', error);
+      console.error('Error fetching data:', error);
     }
   };
 
@@ -70,25 +78,6 @@ export default function Dashboard() {
     const interval = setInterval(fetchData, 5000);
     return () => clearInterval(interval);
   }, []);
-
-  const updateStats = (data: SearchLog[]) => {
-    const completed = data.filter((log) => log.Status === 'Completed');
-    const avgTime =
-      completed.reduce(
-        (acc, log) =>
-          acc +
-          (new Date(log.CompletedAt).getTime() -
-            new Date(log.CreatedAt).getTime()),
-        0
-      ) / (completed.length || 1);
-
-    setStats({
-      totalSearches: data.length,
-      completedSearches: completed.length,
-      averageCompletionTime: avgTime / 1000,
-      completionRate: (completed.length / (data.length || 1)) * 100,
-    });
-  };
 
   const chartData = searchLogs.map((log) => ({
     searchId: log.SearchId.slice(0, 8),
