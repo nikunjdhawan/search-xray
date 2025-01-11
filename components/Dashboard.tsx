@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import {
-  BarChart,
-  Bar,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -41,6 +41,11 @@ interface DashboardStats {
   completionRate: number;
 }
 
+interface SearchTrend {
+  timestamp: string;
+  searches: number;
+}
+
 export default function Dashboard() {
   const [searchLogs, setSearchLogs] = useState<SearchLog[]>([]);
   const [stats, setStats] = useState<DashboardStats>({
@@ -49,6 +54,7 @@ export default function Dashboard() {
     averageCompletionTime: 0,
     completionRate: 0,
   });
+  const [searchTrends, setSearchTrends] = useState<SearchTrend[]>([]);
   const router = useRouter();
 
   const fetchData = async () => {
@@ -68,6 +74,14 @@ export default function Dashboard() {
       }
       const statsData = await statsResponse.json();
       setStats(statsData);
+
+      // Fetch search trends
+      const trendsResponse = await fetch('/api/search-trends');
+      if (!trendsResponse.ok) {
+        throw new Error(`HTTP error! status: ${trendsResponse.status}`);
+      }
+      const trendsData = await trendsResponse.json();
+      setSearchTrends(trendsData);
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -78,14 +92,6 @@ export default function Dashboard() {
     const interval = setInterval(fetchData, 5000);
     return () => clearInterval(interval);
   }, []);
-
-  const chartData = searchLogs.map((log) => ({
-    searchId: log.SearchId.slice(0, 8),
-    completionTime:
-      (new Date(log.CompletedAt).getTime() -
-        new Date(log.CreatedAt).getTime()) /
-      1000,
-  }));
 
   return (
     <div className="min-h-screen bg-background p-8">
@@ -138,30 +144,36 @@ export default function Dashboard() {
         </div>
 
         <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Search Completion Times</h2>
+          <h2 className="text-xl font-semibold mb-4">Searches per Minute (Last Hour)</h2>
           <div className="h-[400px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ left: 50, right: 20, bottom: 40, top: 20 }}>
+              <LineChart data={searchTrends} margin={{ left: 50, right: 20, bottom: 40, top: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis
-                  dataKey="searchId"
-                  label={{ value: 'Search ID', position: 'bottom', offset: 20 }}
+                  dataKey="timestamp"
+                  tickFormatter={(timestamp) => format(new Date(timestamp), 'HH:mm')}
+                  label={{ value: 'Time', position: 'bottom', offset: 20 }}
                 />
                 <YAxis
                   label={{
-                    value: 'Completion Time (s)',
+                    value: 'Searches',
                     angle: -90,
                     position: 'insideLeft',
                     offset: -40
                   }}
                 />
-                <Tooltip />
-                <Bar
-                  dataKey="completionTime"
-                  fill="hsl(var(--primary))"
-                  radius={[4, 4, 0, 0]}
+                <Tooltip
+                  labelFormatter={(timestamp) => format(new Date(timestamp), 'HH:mm:ss')}
+                  formatter={(value: number) => [`${value} searches`, 'Searches']}
                 />
-              </BarChart>
+                <Line
+                  type="monotone"
+                  dataKey="searches"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth={2}
+                  dot={false}
+                />
+              </LineChart>
             </ResponsiveContainer>
           </div>
         </Card>
