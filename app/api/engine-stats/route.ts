@@ -10,13 +10,15 @@ const generateMockEngineStats = () => {
     completedSearches: Math.floor(Math.random() * 800) + 100,
     averageResponseTime: Math.random() * 30 + 10,
     successRate: Math.random() * 20 + 80,
-    miniSearches: Math.floor(Math.random() * 400) + 50,
-    mainSearches: Math.floor(Math.random() * 600) + 50
+    mainSearches: Math.floor(Math.random() * 400) + 50,
+    nearbySearches: Math.floor(Math.random() * 300) + 30,
+    alternateSearches: Math.floor(Math.random() * 200) + 20
   }));
 };
 
 export async function GET() {
-  return NextResponse.json(generateMockEngineStats());
+      return NextResponse.json(generateMockEngineStats());
+
   try {
     const client = await clientPromise;
     const db = client.db("search_analytics");
@@ -40,8 +42,8 @@ export async function GET() {
                 {
                   $divide: [
                     { $subtract: [
-                      { $dateFromString: { dateString: "$CompletedAt" } },
-                      { $dateFromString: { dateString: "$CreatedAt" } }
+                      "$CompletedAt",
+                      "$CreatedAt"
                     ]},
                     1000 // Convert to seconds
                   ]
@@ -50,11 +52,14 @@ export async function GET() {
               ]
             }
           },
-          miniSearches: {
-            $sum: { $cond: [{ $eq: ["$Meta.IsMini", true] }, 1, 0] }
-          },
           mainSearches: {
-            $sum: { $cond: [{ $eq: ["$Meta.IsMain", true] }, 1, 0] }
+            $sum: { $cond: [{ $eq: ["$Meta.SearchType", "Main"] }, 1, 0] }
+          },
+          nearbySearches: {
+            $sum: { $cond: [{ $eq: ["$Meta.SearchType", "Nearby"] }, 1, 0] }
+          },
+          alternateSearches: {
+            $sum: { $cond: [{ $eq: ["$Meta.SearchType", "Alternate"] }, 1, 0] }
           }
         }
       },
@@ -77,8 +82,9 @@ export async function GET() {
               100
             ]
           },
-          miniSearches: 1,
-          mainSearches: 1
+          mainSearches: 1,
+          nearbySearches: 1,
+          alternateSearches: 1
         }
       },
       { $sort: { totalSearches: -1 } }

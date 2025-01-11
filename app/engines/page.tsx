@@ -29,8 +29,9 @@ interface EngineStats {
   completedSearches: number;
   averageResponseTime: number;
   successRate: number;
-  miniSearches: number;
   mainSearches: number;
+  nearbySearches: number;
+  alternateSearches: number;
 }
 
 export default function EnginesDashboard() {
@@ -98,14 +99,18 @@ export default function EnginesDashboard() {
                 <Progress value={engine.successRate} className="h-2" />
               </div>
 
-              <div className="grid grid-cols-2 gap-4 pt-2">
+              <div className="grid grid-cols-3 gap-2 pt-2">
                 <div className="space-y-1">
-                  <div className="text-sm text-muted-foreground">Mini Searches</div>
-                  <div className="text-lg font-semibold">{engine.miniSearches}</div>
+                  <div className="text-sm text-muted-foreground">Main</div>
+                  <div className="text-lg font-semibold">{engine.mainSearches}</div>
                 </div>
                 <div className="space-y-1">
-                  <div className="text-sm text-muted-foreground">Main Searches</div>
-                  <div className="text-lg font-semibold">{engine.mainSearches}</div>
+                  <div className="text-sm text-muted-foreground">Nearby</div>
+                  <div className="text-lg font-semibold">{engine.nearbySearches}</div>
+                </div>
+                <div className="space-y-1">
+                  <div className="text-sm text-muted-foreground">Alternate</div>
+                  <div className="text-lg font-semibold">{engine.alternateSearches}</div>
                 </div>
               </div>
             </Card>
@@ -157,7 +162,9 @@ export default function EnginesDashboard() {
                   <TableHead className="text-right">Total Searches</TableHead>
                   <TableHead className="text-right">Success Rate</TableHead>
                   <TableHead className="text-right">Avg Response Time</TableHead>
-                  <TableHead className="text-right">Mini/Main Ratio</TableHead>
+                  <TableHead className="text-right">Main</TableHead>
+                  <TableHead className="text-right">Nearby</TableHead>
+                  <TableHead className="text-right">Alternate</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -171,9 +178,9 @@ export default function EnginesDashboard() {
                     <TableCell className="text-right">
                       {engine.averageResponseTime.toFixed(2)}s
                     </TableCell>
-                    <TableCell className="text-right">
-                      {engine.miniSearches}:{engine.mainSearches}
-                    </TableCell>
+                    <TableCell className="text-right">{engine.mainSearches}</TableCell>
+                    <TableCell className="text-right">{engine.nearbySearches}</TableCell>
+                    <TableCell className="text-right">{engine.alternateSearches}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
