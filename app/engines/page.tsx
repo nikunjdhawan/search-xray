@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -21,7 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Activity, Timer, CheckCircle2, Search } from 'lucide-react';
+import { Activity, Timer, CheckCircle2, Search, ExternalLink } from 'lucide-react';
 
 interface EngineStats {
   engine: string;
@@ -37,6 +38,7 @@ interface EngineStats {
 export default function EnginesDashboard() {
   const [stats, setStats] = useState<EngineStats[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -83,12 +85,13 @@ export default function EnginesDashboard() {
                     total traffic
                   </p>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Timer className="h-5 w-5 text-blue-500" />
-                  <span className="text-lg font-semibold">
-                    {engine.averageResponseTime.toFixed(1)}s
-                  </span>
-                </div>
+                <button
+                  onClick={() => router.push(`/engines/${encodeURIComponent(engine.engine)}`)}
+                  className="inline-flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-800"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  <span>View Details</span>
+                </button>
               </div>
 
               <div className="space-y-2">
@@ -165,6 +168,7 @@ export default function EnginesDashboard() {
                   <TableHead className="text-right">Main</TableHead>
                   <TableHead className="text-right">Nearby</TableHead>
                   <TableHead className="text-right">Alternate</TableHead>
+                  <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -181,6 +185,15 @@ export default function EnginesDashboard() {
                     <TableCell className="text-right">{engine.mainSearches}</TableCell>
                     <TableCell className="text-right">{engine.nearbySearches}</TableCell>
                     <TableCell className="text-right">{engine.alternateSearches}</TableCell>
+                    <TableCell>
+                      <button
+                        onClick={() => router.push(`/engines/${encodeURIComponent(engine.engine)}`)}
+                        className="inline-flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-800"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        <span>Details</span>
+                      </button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
